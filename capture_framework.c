@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <unistd.h>
 
 #ifdef HAVE_CAPABILITY
 #include <sys/capability.h>
@@ -599,7 +600,7 @@ void cf_params_spectrum_free(cf_params_spectrum_t *si) {
 }
 
 void cf_handler_shutdown(kis_capture_handler_t *caph) {
-    cf_ipc_t *ipc;
+    cf_ipc_t *ipc, *nipc;
 
     if (caph == NULL)
         return;
@@ -611,8 +612,14 @@ void cf_handler_shutdown(kis_capture_handler_t *caph) {
     ipc = caph->ipc_list;
 
     while (ipc != NULL) {
+        /* kill ipc & give it a chance to die gracefully */
+        cf_ipc_signal(caph, ipc, SIGTERM);
+        usleep(250000);
         cf_ipc_signal(caph, ipc, SIGKILL);
+
+        nipc = ipc->next;
         cf_ipc_free(caph, ipc);
+        ipc = nipc;
     }
 
     /* Kill the capture thread */
