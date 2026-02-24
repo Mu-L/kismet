@@ -606,6 +606,15 @@ void cf_handler_shutdown(kis_capture_handler_t *caph) {
         return;
 
     pthread_mutex_lock(&(caph->handler_lock));
+
+    if (caph->monitor_pid > 0) {
+	    kill(caph->monitor_pid, SIGINT);
+    }
+
+    if (caph->child_pid > 0) {
+	    kill(caph->child_pid, SIGINT);
+    }
+
     caph->shutdown = 1;
 
     /* Kill any IPC */
@@ -627,6 +636,16 @@ void cf_handler_shutdown(kis_capture_handler_t *caph) {
         pthread_cancel(caph->capturethread);
         caph->capture_running = 0;
     }
+
+    pthread_mutex_lock(&(caph->out_ringbuf_lock));
+    if (caph->capture_running) {
+	    pthread_cancel(caph->capturethread);
+	    caph->capture_running = 0;
+    }
+    pthread_mutex_unlock(&(caph->out_ringbuf_lock));
+
+    /* Kill anything pending */
+    pthread_cond_broadcast(&(caph->out_ringbuf_flush_cond));
 
     pthread_mutex_unlock(&(caph->handler_lock));
 }
@@ -1342,36 +1361,18 @@ void *cf_int_signal_thread(void *arg) {
             case SIGTERM:
             case SIGHUP:
             case SIGQUIT:
-                if (caph->monitor_pid > 0) {
-                    kill(caph->monitor_pid, SIGINT);
-                }
-
-                if (caph->child_pid > 0) {
-                    kill(caph->child_pid, SIGINT);
-                }
-
-                pthread_mutex_lock(&(caph->out_ringbuf_lock));
-                if (caph->capture_running) {
-                    pthread_cancel(caph->capturethread);
-                    caph->capture_running = 0;
-                }
-                pthread_mutex_unlock(&(caph->out_ringbuf_lock));
-
-                /* Kill anything pending */
-                pthread_cond_broadcast(&(caph->out_ringbuf_flush_cond));
-
                 break;
-
             case SIGCHLD:
                 cf_process_child_signals(caph);
                 break;
-
             case SIGALRM:
                 /* Do nothing with the timer, it just ticks us to break out of sigwait */
                 break;
-
         }
     }
+
+    fprintf(stderr, "DEBUG - cf handler shutdown\n");
+    cf_handler_shutdown(caph);
 
     return NULL;
 }
