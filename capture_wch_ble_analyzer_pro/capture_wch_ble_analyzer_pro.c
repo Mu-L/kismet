@@ -613,12 +613,14 @@ static void on_packet(const wch_pkt_hdr_t *hdr, const uint8_t *pdu, int pdu_len,
 /* Run a standard glib mainloop inside the capture thread */
 void capture_thread(kis_capture_handler_t *caph) {
     local_wch_btle_t *local = (local_wch_btle_t *) caph->userdata;
+    char errstr[STATUS_MAX];
 
 #define DRAIN_POLL_MS  5
 #define IDLE_WAIT_MS   100
 
     while (1) {
         bool any_data = false;
+        bool any_open = false;
 
         if (caph->spindown) {
             break;
@@ -636,6 +638,15 @@ void capture_thread(kis_capture_handler_t *caph) {
                     continue;
                 }
 
+                if (n < 0) {
+                    snprintf(errstr, STATUS_MAX,
+                            "Unable to read from WCH radio %d %d:%d: %s, closing device",
+                            i, local->wch[i]->bus, local->wch[i]->addr,
+                            libusb_error_name(n));
+                    cf_send_message(caph, errstr, MSGFLAG_ERROR);
+                    wch_close_device(local->wch[i]);
+                }
+
                 break;
             }
         }
@@ -646,8 +657,30 @@ void capture_thread(kis_capture_handler_t *caph) {
             for (int i = 0; i < local->num_wch && !caph->spindown; i++) {
                 if (!local->wch[i]->is_open || !local->bufs[i])
                     continue;
-                wch_read_packets(local->wch[i], local->bufs[i], on_packet, caph, IDLE_WAIT_MS);
+
+                int n = wch_read_packets(local->wch[i], local->bufs[i], on_packet, caph, IDLE_WAIT_MS);
+
+                if (n < 0) {
+                    snprintf(errstr, STATUS_MAX,
+                            "Unable to read from WCH radio %d %d:%d: %s, closing device",
+                            i, local->wch[i]->bus, local->wch[i]->addr,
+                            libusb_error_name(n));
+                    cf_send_message(caph, errstr, MSGFLAG_ERROR);
+                    wch_close_device(local->wch[i]);
+                }
             }
+        }
+
+        /* If every configured MCU has failed and been closed, there is
+         * nothing left to capture from; stop looping so the handler spins
+         * down cleanly instead of busy-looping forever on a datasource
+         * that will never produce data again. */
+        for (int i = 0; i < local->num_wch; i++) {
+            any_open |= local->wch[i]->is_open;
+        }
+
+        if (!any_open) {
+            break;
         }
     }
 
