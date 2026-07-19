@@ -262,6 +262,8 @@ public:
         freq_khz = 0;
         accuracy = 0;
         channel = "0";
+        antenna_signal_map.clear();
+        content_checkum = 0;
     }
 
     bool data_ok;
