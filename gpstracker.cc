@@ -499,8 +499,10 @@ std::shared_ptr<kis_gps_packinfo> gps_tracker::get_best_location() {
 void gps_tracker::get_best_location(kis_gps_packinfo& location) {
     kis_lock_guard<kis_mutex> lk(gpsmanager_mutex, "get_best_location");
 
-    if (gps_instances_vec == nullptr)
+    if (gps_instances_vec == nullptr) {
 		location.reset();
+		return;
+	}
 
     for (const auto& d : *gps_instances_vec) {
         auto gps = static_cast<kis_gps *>(d.get());
