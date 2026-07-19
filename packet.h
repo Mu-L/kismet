@@ -189,6 +189,8 @@ public:
     }
 
     void reset() {
+        gps_info_ok = false;
+
         merge_partial = false;
         merge_flags = 0;
 
