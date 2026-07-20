@@ -331,7 +331,7 @@ function BuildContentElement(element) {
 function ActivateTab() {
     $('#adsb_holder').ready(() => {
         if (kismet.getStorage('kismet.base.unit.distance') === 'metric' ||
-            kismet.getStorage('kismet.base.unit.distance') === '')
+            kismet.getStorage('kismet.base.unit.distance', '') === '')
             units = 'm';
 
         if (units === 'm') {

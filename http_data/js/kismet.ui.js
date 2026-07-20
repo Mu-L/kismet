@@ -811,7 +811,7 @@ exports.DegToDir = function(deg) {
 // Use our settings to make some conversion functions for distance and temperature
 exports.renderDistance = function(k, precision = 5) {
     if (kismet.getStorage('kismet.base.unit.distance') === 'metric' ||
-            kismet.getStorage('kismet.base.unit.distance') === '') {
+            kismet.getStorage('kismet.base.unit.distance', '') === '') {
         if (k < 1) {
             return (k * 1000).toFixed(precision) + ' m';
         }
@@ -830,7 +830,7 @@ exports.renderDistance = function(k, precision = 5) {
 // Use our settings to make some conversion functions for distance and temperature
 exports.renderHeightDistance = function(m, precision = 5) {
     if (kismet.getStorage('kismet.base.unit.distance') === 'metric' ||
-            kismet.getStorage('kismet.base.unit.distance') === '') {
+            kismet.getStorage('kismet.base.unit.distance', '') === '') {
         if (m < 1000) {
             return m.toFixed(precision) + ' m';
         }
@@ -848,7 +848,7 @@ exports.renderHeightDistance = function(m, precision = 5) {
 
 exports.renderSpeed = function(kph, precision = 5) {
     if (kismet.getStorage('kismet.base.unit.speed') === 'metric' ||
-            kismet.getStorage('kismet.base.unit.speed') === '') {
+            kismet.getStorage('kismet.base.unit.speed', '') === '') {
         return kph.toFixed(precision) + ' KPH';
     } else {
         return (kph * 0.621371).toFixed(precision) + ' MPH';
@@ -857,7 +857,7 @@ exports.renderSpeed = function(kph, precision = 5) {
 
 exports.renderTemperature = function(c, precision = 5) {
     if (kismet.getStorage('kismet.base.unit.temp') === 'celsius' ||
-            kismet.getStorage('kismet.base.unit.temp') === '') {
+            kismet.getStorage('kismet.base.unit.temp', '') === '') {
         return c.toFixed(precision) + '&deg; C';
     } else {
         return (c * (9/5) + 32).toFixed(precision) + '&deg; F';
