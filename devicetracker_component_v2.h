@@ -290,7 +290,7 @@ public:
     const auto internal_id() const { return internal_id_; }
     void set_internal_id(auto id) { internal_id_ = id; }
 
-    const auto key() const { return key_; }
+    const auto& key() const { return key_; }
     void set_key(const auto& k) { key_ = k; }
 
     const auto phyname() { return phyname_; }
@@ -468,6 +468,12 @@ public:
     virtual void as_json(std::ostream& os, json_adapter_v2::opts *opts) override;
     virtual void filtered_as_json(std::ostream& os, json_adapter_v2::opts *opts, const json_adapter_v2::field_group_map& fields) override;
 
+    virtual bool match_regex(const kis_regex::regex& re,
+            const json_adapter_v2::field_group_map& fields) override;
+
+    virtual bool match_string(const std::string& match, bool match_icase, bool match_full,
+            const json_adapter_v2::field_group_map& fields) override;
+
     using subcomponent_encoder_fn_t =
         std::function<void (std::ostream& os, json_adapter_v2::opts *opts, json_adapter_v2::jsonable *sub,
                 const json_adapter_v2::field_group_map& fields)>;
@@ -590,12 +596,12 @@ template<> struct json_adapter_v2::json_encode<kis_tracked_device_base_v2> {
 };
 
 enum class kis_ipdata_type_v2 {
-	unknown = 0,
-	factoryguess = 1,
-	udptcp = 2,
-	arp = 3,
-	dhcp = 4,
-	group = 5
+    unknown = 0,
+    factoryguess = 1,
+    udptcp = 2,
+    arp = 3,
+    dhcp = 4,
+    group = 5
 };
 
 class kis_tracked_ip_v4_data_v2 : public json_adapter_v2::jsonable {
