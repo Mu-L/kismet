@@ -47,6 +47,8 @@
 #include "fmt.h"
 #include "multi_constexpr.h"
 
+#include "regex_adapter.h"
+
 #define MAC_LEN_MAX		8
 
 struct mac_addr {
@@ -504,6 +506,27 @@ namespace std {
         }
     };
 }
+
+namespace kis_regex {
+    // both the regex and string comparators are ugly right now & would benefit from
+    // figuring out some smarter way of doing in so that there isn't a repeated forced
+    // conversion to string
+    //
+    // conversely, it would take 3x the ram per mac to have a saved string conversion
+    template<> struct regex_match<mac_addr> {
+        bool operator()(const regex& re, const mac_addr& m) {
+            return re.match(m.as_string());
+        }
+    };
+
+    template<> struct string_match<mac_addr> {
+        bool operator()(const std::string& match, const mac_addr& m,
+                bool match_icase, bool match_full) {
+            return string_match<std::string>{}(match, m.as_string(), match_icase, match_full);
+        }
+    };
+}
+
 
 #endif
 
