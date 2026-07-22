@@ -1,19 +1,19 @@
 /*
-    This file is part of Kismet
+    this file is part of kismet
 
-    Kismet is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
+    kismet is free software; you can redistribute it and/or modify
+    it under the terms of the gnu general public license as published by
+    the free software foundation; either version 2 of the license, or
     (at your option) any later version.
 
-    Kismet is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    kismet is distributed in the hope that it will be useful,
+    but without any warranty; without even the implied warranty of
+    merchantability or fitness for a particular purpose.  see the
+    gnu general public license for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Kismet; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    you should have received a copy of the gnu general public license
+    along with kismet; if not, write to the free software
+    foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
 */
 
 #ifndef __DEVICE_TRACKER_VIEW_WORKERS_V2_H__
@@ -26,14 +26,7 @@
 
 #include "devicetracker_component_v2.h"
 
-#ifdef HAVE_LIBPCRE1
-#include <pcre.h>
-#endif
-
-#ifdef HAVE_LIBPCRE2
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
-#endif
+#include "regex_adapter.h"
 
 class device_tracker_view_worker_v2 {
 public:
@@ -44,6 +37,7 @@ public:
     virtual void finalize() { }
 
     const auto& get_matched() { return matched_; }
+
 protected:
     friend class device_tracker_view;
 
@@ -68,6 +62,52 @@ public:
             matched_.push_back(d);
         }
     }
+};
+
+
+class device_tracker_view_regex_worker_v2 : public device_tracker_view_worker_v2 {
+public:
+    // match a single regex/field
+    device_tracker_view_regex_worker_v2(const std::string& re, const std::string& fn);
+
+    // match N regex:[fields] pairs
+    device_tracker_view_regex_worker_v2(const std::list<std::pair<std::string, std::list<std::string>>>& matchset,
+            bool match_any);
+
+    device_tracker_view_regex_worker_v2(const device_tracker_view_regex_worker_v2&) = delete;
+    device_tracker_view_regex_worker_v2(const device_tracker_view_regex_worker_v2&& w) = delete;
+
+    virtual ~device_tracker_view_regex_worker_v2() { }
+
+    virtual bool match_device(kis_tracked_device_base_v2 *d) override;
+
+protected:
+    std::list<std::pair<std::unique_ptr<kis_regex::regex>, json_adapter_v2::field_group_map>> regex_field_list_;
+    bool match_any_;
+};
+
+class device_tracker_view_string_worker_v2 : public device_tracker_view_worker_v2 {
+public:
+    // match a single string/field
+    device_tracker_view_string_worker_v2(const std::string& str, const std::string& fn,
+            bool match_icase, bool match_full);
+
+    // match N string:[fields] pairs
+    device_tracker_view_string_worker_v2(const std::list<std::pair<std::string, std::list<std::string>>>& matchset,
+            bool match_any, bool match_icase, bool match_full);
+
+    device_tracker_view_string_worker_v2(const device_tracker_view_string_worker_v2&) = delete;
+    device_tracker_view_string_worker_v2(const device_tracker_view_string_worker_v2&& w) = delete;
+
+    virtual ~device_tracker_view_string_worker_v2() { }
+
+    virtual bool match_device(kis_tracked_device_base_v2 *d) override;
+
+protected:
+    std::list<std::pair<std::string, json_adapter_v2::field_group_map>> string_field_list_;
+    bool match_any_;
+    bool match_icase_;
+    bool match_full_;
 };
 
 
