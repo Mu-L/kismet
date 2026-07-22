@@ -50,6 +50,7 @@ namespace json_adapter_v2 {
     // peek the front element of a field path, don't modify the element
     std::string_view peek_path(const std::string_view& v);
 
+    using single_field_list = std::list<std::string>;
     using raw_field_list = std::list<std::pair<std::string, std::string>>;
     using mod_field_list = std::list<std::pair<std::string_view, std::string>>;
 
@@ -63,6 +64,7 @@ namespace json_adapter_v2 {
 
     // break down a list of fields and group them by parent objects so that field
     // simplifiers can be applied to keyed maps and vectors
+    void group_fields(const single_field_list& fields, field_group_map& grouped);
     void group_fields(const raw_field_list& fields, field_group_map& grouped);
     void group_fields(const mod_field_list& fields, field_group_map& grouped);
 
