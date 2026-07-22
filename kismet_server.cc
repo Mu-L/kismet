@@ -92,6 +92,7 @@
 #include "datasource_radiacode.h"
 #include "datasource_antsdr_droneid.h"
 #include "datasource_catsniffer_zigbee.h"
+#include "datasource_sniffle_ble.h"
 #include "datasource_wch_ble_analyzer_pro.h"
 
 #include "logtracker.h"
@@ -939,6 +940,7 @@ int main(int argc, char *argv[], char *envp[]) {
     datasourcetracker->register_datasource(shared_datasource_builder(new datasource_radiacode_usb_builder()));
     datasourcetracker->register_datasource(shared_datasource_builder(new datasource_antsdr_droneid_builder()));
     datasourcetracker->register_datasource(shared_datasource_builder(new datasource_catsniffer_zigbee_builder()));
+    datasourcetracker->register_datasource(shared_datasource_builder(new datasource_sniffle_ble_builder()));
     datasourcetracker->register_datasource(shared_datasource_builder(new datasource_wch_ble_pro_builder()));
 
     // Virtual sources get a special meta-builder
