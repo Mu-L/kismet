@@ -597,6 +597,7 @@ int main(int argc, char *argv[]) {
     if (r == 0) {
         return 0;
     } else if (r < 0) {
+        cf_print_help(caph, argv[0]);
         return -1;
     }
 
