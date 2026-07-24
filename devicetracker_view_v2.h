@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "devicetracker_component_v2.h"
+#include "device_tracker_view_workers_v2.h"
 #include "json_adapter_v2.h"
 #include "kis_mutex.h"
 #include "packet.h"
@@ -140,10 +141,65 @@ public:
         }
     }
 
+    virtual void as_json(std::ostream& os, json_adapter_v2::opts *opts) override {
+        fmt::print(os, "{{");
 
+        auto sv_comma = opts->next_key_comma;
+        opts->next_key_comma = false;
 
-    virtual void as_json(std::ostream& os, json_adapter_v2::opts *opts) override;
-    virtual void filtered_as_json(std::ostream& os, json_adapter_v2::opts *opts, const json_adapter_v2::field_group_map& fields) override;
+        json_adapter_v2::json_encode_keyed<std::string>{}(os, "kismet.devices.view.id", opts, view_id_);
+        json_adapter_v2::json_encode_keyed<std::string>{}(os, "kismet.devices.view.description", opts, view_description_);
+
+        // register_field("kismet.devices.view.size", "Number of devices in list", &list_sz);
+        // register_field("kismet.devices.view.indexed", "Index view in normal displays", &view_indexed);
+
+        opts->next_key_comma = sv_comma;
+        fmt::print(os, "}}");
+    }
+
+    virtual void filtered_as_json(std::ostream& os, json_adapter_v2::opts *opts, const json_adapter_v2::field_group_map& fields) override {
+
+    if (fields.size() == 0) {
+        return as_json(os, opts);
+    }
+
+    auto sv_comma = opts->next_key_comma;
+    opts->next_key_comma = false;
+
+    std::string signal_type;
+
+    fmt::print(os, "{{");
+    for (const auto& f : fields) {
+        switch (json_adapter_v2::consthash(f.first)) {
+            case json_adapter_v2::consthash("kismet.common.signal.type"):
+                switch (sig_type) {
+                    case 1:
+                        signal_type = "dBm";
+                        break;
+                    case 2:
+                        signal_type = "RSSI";
+                        break;
+                    default:
+                        signal_type = "raw";
+                        break;
+                }
+                json_adapter_v2::json_encode_keyed<std::string>{}(os, f.second.rename, opts, signal_type);
+                break;
+            case json_adapter_v2::consthash("kismet.common.signal.last_signal"):
+                json_adapter_v2::json_encode_keyed<int32_t>{}(os, f.second.rename, opts, last_signal);
+                break;
+            default:
+                json_adapter_v2::json_encode_keyed<int>{}(os, f.second.rename, opts, 0);
+        }
+    fmt::print(os, "}}");
+    opts->next_key_comma = sv_comma;
+    }
+
+    virtual void run_worker(device_tracker_view_worker_v2 *w) {
+        for (const auto& d : device_list_) {
+            w->match_device(d);
+        }
+    }
 
 protected:
     std::string view_id_;

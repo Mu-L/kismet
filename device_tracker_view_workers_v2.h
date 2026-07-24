@@ -39,8 +39,6 @@ public:
     const auto& get_matched() { return matched_; }
 
 protected:
-    friend class device_tracker_view;
-
     std::vector<kis_tracked_device_base_v2 *> matched_;
 };
 
