@@ -196,6 +196,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     interface = strndup(placeholder, placeholder_len);
 
     if (strstr(interface, "wch-btle") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected a wch-btle interface, skipping");
         free(interface);
         return 0;
     }
@@ -211,6 +212,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     wch_devs_cnt = wch_find_devices(local->usb_ctx, wch_devs);
 
     if (wch_devs_cnt <= 0) {
+        snprintf(msg, STATUS_MAX, "Didnt' find any wch USB devices");
         return 0;
     }
 
@@ -253,6 +255,8 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     }
 
     if (!matched) {
+        snprintf(msg, STATUS_MAX, "Didn't find any matching wch interfaces for %s", interface);
+        free(interface);
         return 0;
     }
 

@@ -411,13 +411,14 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 
     // Only handle our interface type
     if (strstr(interface, "catsniffer_zigbee") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected catsniffer_zigbee interface, skipping");
         free(interface);
         return 0; // not ours
     }
 
     if ((placeholder_len = cf_find_flag(&placeholder, "device", definition)) > 0) {
         device = strndup(placeholder, placeholder_len);
-        printf("device: %s\n", device);
+        // printf("device: %s\n", device);
     } else {
         snprintf(msg, STATUS_MAX, "Expected device= path to serial device in definition");
         free(interface);
@@ -425,9 +426,12 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     }
 
     if ((placeholder_len = cf_find_flag(&placeholder, "band", definition)) > 0) {
-        if (strncmp(placeholder, "800",  placeholder_len) == 0) band = 0;
-        else if (strncmp(placeholder, "900",  placeholder_len) == 0) band = 1;
-        else if (strncmp(placeholder, "2400", placeholder_len) == 0) band = 2;
+        if (strncmp(placeholder, "800",  placeholder_len) == 0)
+            band = 0;
+        else if (strncmp(placeholder, "900",  placeholder_len) == 0)
+            band = 1;
+        else if (strncmp(placeholder, "2400", placeholder_len) == 0)
+            band = 2;
     }
 
     if ((placeholder_len = cf_find_flag(&placeholder, "uuid", definition)) > 0) {
@@ -443,9 +447,16 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     int n_chans = 0;
     int s_chan  = 0;
 
-    if (band == 0) { n_chans = 1;  s_chan = 0;  }
-    else if (band == 1) { n_chans = 10; s_chan = 1;  }
-    else if (band == 2) { n_chans = 16; s_chan = 11; }
+    if (band == 0) {
+        n_chans = 1;
+        s_chan = 0;
+    } else if (band == 1) {
+        n_chans = 10;
+        s_chan = 1;
+    } else if (band == 2) {
+        n_chans = 16;
+        s_chan = 11;
+    }
 
     (*ret_interface)->channels = (char **) malloc(sizeof(char *) * n_chans);
 

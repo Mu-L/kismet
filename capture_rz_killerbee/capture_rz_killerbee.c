@@ -216,6 +216,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 
 	/* Look for the interface type */
 	if (strstr(interface, "rz_killerbee") != interface) {
+        snprintf(msg, STATUS_MAX, "Didn't find rz_killerbee interface, skipping");
 		free(interface);
 		return 0;
 	}
@@ -226,6 +227,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 
 	/* If we don't have a valid busno/devno or malformed interface name */
 	if (x != -1 && x != 2) {
+        snprintf(msg, STATUS_MAX, "Didn't find a valid rz_killerbee-bus#-dev# interface");
 		return 0;
 	}
 
@@ -234,6 +236,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 		libusb_get_device_list(localrz_killerbee->libusb_ctx, &libusb_devs);
 
 	if (libusb_devices_cnt < 0) {
+        snprintf(msg, STATUS_MAX, "Didn't find any USB devices");
 		return 0;
 	}
 
@@ -267,8 +270,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 	 * interface name and the location in the bus */
 	snprintf(errstr, STATUS_MAX, "%08X-0000-0000-0000-%06X%06X",
 			adler32_csum((unsigned char *) "kismet_cap_rz_killerbee",
-				strlen("kismet_cap_rz_killerbee")) &
-			0xFFFFFFFF,
+				strlen("kismet_cap_rz_killerbee")) & 0xFFFFFFFF,
 			busno, devno);
 	*uuid = strdup(errstr);
 

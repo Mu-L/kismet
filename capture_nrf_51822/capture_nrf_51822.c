@@ -187,23 +187,21 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
 
     /* Look for the interface type */
     if (strstr(interface, "nrf51822") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected nrf51822 interface, skipping");
         free(interface);
         return 0;
     }
 
-    if ((placeholder_len = cf_find_flag(&placeholder, "device", definition)) >
-        0) {
+    if ((placeholder_len = cf_find_flag(&placeholder, "device", definition)) > 0) {
         device = strndup(placeholder, placeholder_len);
     } else {
-        snprintf(msg, STATUS_MAX,
-            "Expected device= path to serial device in definition");
+        snprintf(msg, STATUS_MAX, "Expected device= path to serial device in definition");
         return 0;
     }
 
     /* Make a spoofed, but consistent, UUID based on the adler32 of the
      * interface name and the serial device */
-    if ((placeholder_len = cf_find_flag(&placeholder, "uuid", definition)) >
-        0) {
+    if ((placeholder_len = cf_find_flag(&placeholder, "uuid", definition)) > 0) {
         *uuid = strndup(placeholder, placeholder_len);
     } else {
         snprintf(errstr, STATUS_MAX, "%08X-0000-0000-0000-%012X",

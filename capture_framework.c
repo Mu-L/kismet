@@ -2348,7 +2348,7 @@ int cf_handler_tcp_remote_connect(kis_capture_handler_t *caph) {
     cps = NULL;
 
     if (caph->probe_cb == NULL) {
-        fprintf(stderr, "FATAL: Unable to connect as remote source when no probe callback provided.\n");
+        fprintf(stderr, "FATAL: Unable to act as a remote source when no probe callback provided.\n");
         return -1;
     }
 

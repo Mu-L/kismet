@@ -330,6 +330,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     interface = strndup(placeholder, placeholder_len);
 
     if (strstr(interface, "sniffle_ble") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected a 'sniffle_ble' interface, not matching");
         free(interface);
         return 0;
     }

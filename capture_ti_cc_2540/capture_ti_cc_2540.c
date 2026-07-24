@@ -200,6 +200,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
 
     /* Look for the interface type */
     if (strstr(interface, "ticc2540") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected ticc2540 interface, skipping");
         free(interface);
         return 0;
     }
@@ -220,6 +221,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
 
     /* If we don't have a valid busno/devno or malformed interface name */
     if (busno == -1 && devno == -1) {
+        snprintf(msg, STATUS_MAX, "Invalid ticc2540 interface, expected ticc2540-# or ticc2540-bus#-dev#");
         return 0;
     }
 
@@ -236,6 +238,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     libusb_devices_cnt = libusb_get_device_list(localticc2540->libusb_ctx, &libusb_devs);
 
     if (libusb_devices_cnt < 0) {
+        snprintf(msg, STATUS_MAX, "Could not find any USB devices");
         return 0;
     }
 
@@ -271,6 +274,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     pthread_mutex_unlock(&(localticc2540->usb_mutex));
 
     if (!matched_device) {
+        snprintf(msg, STATUS_MAX, "Did not find any matching ticc2540 interfaces");
         return 0;
     }
 

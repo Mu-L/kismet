@@ -252,6 +252,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     interface = strndup(placeholder, placeholder_len);
 
     if (strstr(interface, "radiacode-usb") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected a radiacode-usb interface, skipping");
         free(interface);
         return 0;
     }
@@ -273,6 +274,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno,
     libusb_devices_cnt = libusb_get_device_list(localrad->usb_ctx, &libusb_devs);
 
     if (libusb_devices_cnt < 0) {
+        snprintf(msg, STATUS_MAX, "Found no USB devices, skipping");
         return 0;
     }
 

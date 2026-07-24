@@ -210,6 +210,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
 
     /* Look for the interface type */
     if (strstr(interface, "ticc2531") != interface) {
+        snprintf(msg, STATUS_MAX, "Expected ticc2531 interface, skipping");
         free(interface);
         return 0;
     }
@@ -244,6 +245,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     libusb_devices_cnt = libusb_get_device_list(localticc2531->libusb_ctx, &libusb_devs);
 
     if (libusb_devices_cnt < 0) {
+        snprintf(msg, STATUS_MAX, "Did not find any USB devices");
         pthread_mutex_unlock(&(localticc2531->usb_mutex));
         return 0;
     }
@@ -281,6 +283,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     pthread_mutex_unlock(&(localticc2531->usb_mutex));
 
     if (!matched_device) {
+        snprintf(msg, STATUS_MAX, "Did not finding a matching ticc2531 interface");
         return 0;
     }
 

@@ -578,11 +578,13 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     interface = strndup(placeholder, placeholder_len);
 
     if (sscanf(interface, "hci%u", &devid) != 1) {
+        snprintf(msg, STATUS_MAX, "Expected hciX interface, skipping");
         free(interface);
         return 0;
     }
 
     if ((hci_sock = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI)) < 0) {
+        snprintf(msg, STATUS_MAX, "Unable to create a Bluetooth HCI socket to %s", interface);
         free(interface);
         return 0;
     }
@@ -590,6 +592,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
     di.dev_id = devid;
 
     if (ioctl(hci_sock, HCIGETDEVINFO, (void *) &di)) {
+        snprintf(msg, STATUS_MAX, "Unable to fetch Bluetooth device info from %s", interface);
         free(interface);
         return 0;
     }

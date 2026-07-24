@@ -216,6 +216,7 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
 
     /* Look for the interface type */
     if (strstr(interface, "mousejack") != interface) {
+        snprintf(msg, STATUS_MAX, "Didn't find a mousejack interface, skipping");
         free(interface);
         return 0;
     }
@@ -229,12 +230,14 @@ int probe_callback(kis_capture_handler_t *caph, uint32_t seqno, char *definition
 
     /* If we don't have a valid busno/devno or malformed interface name */
     if (x != -1 && x != 2) {
+        snprintf(msg, STATUS_MAX, "Could not find a valid bus or device path");
         return 0;
     }
 
     libusb_devices_cnt = libusb_get_device_list(localnrf->libusb_ctx, &libusb_devs);
 
     if (libusb_devices_cnt < 0) {
+        snprintf(msg, STATUS_MAX, "Could not find any USB devices");
         return 0;
     }
 
