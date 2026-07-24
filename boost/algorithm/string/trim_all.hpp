@@ -108,6 +108,7 @@ namespace boost {
 
             \param Input An input sequence
             \param Loc A locale used for 'space' classification
+            \return A trimmed copy of the input
         */
         template<typename SequenceT>
         inline void trim_all(SequenceT& Input, const std::locale& Loc =std::locale())
@@ -190,6 +191,7 @@ namespace boost {
             \param Input An input sequence
             \param Fill A string used to fill the inner spaces
             \param Loc A locale used for 'space' classification
+            \return A trimmed copy of the input
         */
         template<typename SequenceT, typename RangeT>
         inline void trim_fill(SequenceT& Input, const RangeT& Fill, const std::locale& Loc =std::locale())
