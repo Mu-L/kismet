@@ -283,10 +283,10 @@ void channel_tracker_v3::filtered_as_json(std::ostream& os, json_adapter_v2::opt
         return as_json(os, opts);
     }
 
-	auto sv_comma = opts->next_key_comma;
-	opts->next_key_comma = false;
+    auto sv_comma = opts->next_key_comma;
+    opts->next_key_comma = false;
 
-	fmt::print(os, "{{");
+    fmt::print(os, "{{");
 
     json_adapter_v2::field_group_map subgroup;
 
@@ -305,7 +305,7 @@ void channel_tracker_v3::filtered_as_json(std::ostream& os, json_adapter_v2::opt
         }
     }
 
-	fmt::print(os, "}}");
+    fmt::print(os, "}}");
 
     opts->next_key_comma = sv_comma;
 }

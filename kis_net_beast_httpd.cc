@@ -489,15 +489,15 @@ void kis_net_beast_httpd::handle_connection(const boost::system::error_code& ec,
     if (!running)
         return;
 
-	// Spin each connection into its own thread
+    // Spin each connection into its own thread
     if (!ec) {
         std::thread conthread([this, tcp_socket = boost::beast::tcp_stream(std::move(socket))]() mutable {
                 thread_set_process_name("BEAST");
 
                 while (tcp_socket.socket().is_open()) {
-					// Reset the timeout every loop through; each request in this
-					// socket pipeline has up to 30 seconds to complete
-					boost::beast::get_lowest_layer(tcp_socket).expires_after(std::chrono::seconds(30));
+                    // Reset the timeout every loop through; each request in this
+                    // socket pipeline has up to 30 seconds to complete
+                    boost::beast::get_lowest_layer(tcp_socket).expires_after(std::chrono::seconds(30));
 
                     // Associate the socket
                     auto conn =
@@ -786,7 +786,7 @@ void kis_net_beast_httpd::register_websocket_route(const std::string& route,
 std::string kis_net_beast_httpd::create_auth(const std::string& name, const std::string& role, time_t expiry) {
     kis_lock_guard<kis_mutex> lk(auth_mutex, "beast_httpd create_auth");
 
-	return create_auth_impl(name, role, expiry);
+    return create_auth_impl(name, role, expiry);
 }
 
 std::string kis_net_beast_httpd::create_auth_impl(const std::string& name, const std::string& role, time_t expiry) {
@@ -1935,17 +1935,10 @@ void kis_net_web_jsonable_endpoint::handle_request(std::shared_ptr<kis_net_beast
         if (pre_func)
             pre_func(content);
 
-		/*
-        auto summary = con->summarize_with_json(output_content, rename_map);
-
-        Globalreg::globalreg->entrytracker->serialize(static_cast<std::string>(con->uri()), os,
-                summary, rename_map);
-		*/
-
         json_adapter_v2::raw_field_list fields;
         con->extract_field_summary_v2(fields);
 
-		json_adapter_v2::serialize(os, content, "json", fields);
+        json_adapter_v2::serialize(os, content, "json", fields);
 
         os.flush();
 

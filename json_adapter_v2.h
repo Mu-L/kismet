@@ -1,19 +1,19 @@
 /*
-    This file is part of Kismet
+    this file is part of kismet
 
-    Kismet is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
+    kismet is free software; you can redistribute it and/or modify
+    it under the terms of the gnu general public license as published by
+    the free software foundation; either version 2 of the license, or
     (at your option) any later version.
 
-    Kismet is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    kismet is distributed in the hope that it will be useful,
+    but without any warranty; without even the implied warranty of
+    merchantability or fitness for a particular purpose.  see the
+    gnu general public license for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Kismet; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    you should have received a copy of the gnu general public license
+    along with kismet; if not, write to the free software
+    foundation, inc., 59 temple place, suite 330, boston, ma  02111-1307  usa
 */
 
 #ifndef __JSON_ADAPTER_V2__
@@ -28,6 +28,8 @@
 #include <ostream>
 
 #include "fmt.h"
+
+#include "regex_adapter.h"
 
 namespace json_adapter_v2 {
     constexpr int consthash(const std::string_view& sv) noexcept{
@@ -48,6 +50,7 @@ namespace json_adapter_v2 {
     // peek the front element of a field path, don't modify the element
     std::string_view peek_path(const std::string_view& v);
 
+    using single_field_list = std::list<std::string>;
     using raw_field_list = std::list<std::pair<std::string, std::string>>;
     using mod_field_list = std::list<std::pair<std::string_view, std::string>>;
 
@@ -61,6 +64,7 @@ namespace json_adapter_v2 {
 
     // break down a list of fields and group them by parent objects so that field
     // simplifiers can be applied to keyed maps and vectors
+    void group_fields(const single_field_list& fields, field_group_map& grouped);
     void group_fields(const raw_field_list& fields, field_group_map& grouped);
     void group_fields(const mod_field_list& fields, field_group_map& grouped);
 
@@ -86,12 +90,18 @@ namespace json_adapter_v2 {
     public:
         virtual ~jsonable() { }
 
-		virtual void pre_serialize() { }
-		virtual void post_serialize() { }
+        virtual void pre_serialize() { }
+        virtual void post_serialize() { }
 
         virtual void as_json(std::ostream& os, json_adapter_v2::opts *opts) = 0;
         virtual void filtered_as_json(std::ostream& os, json_adapter_v2::opts *opts,
                 const json_adapter_v2::field_group_map& fields) = 0;
+
+        virtual bool match_regex(const kis_regex::regex& re,
+                const json_adapter_v2::field_group_map& fields) { return false; }
+
+        virtual bool match_string(const std::string& match, bool match_icase, bool match_full,
+                const json_adapter_v2::field_group_map& fields) { return false; }
     };
 
     void serialize(std::ostream& os, jsonable *object,
@@ -438,8 +448,8 @@ namespace json_adapter_v2 {
         }
     };
 
-	// encode the keys of a map as if it were a vector or list; allows
-	// for fast storage of random-access single entries
+    // encode the keys of a map as if it were a vector or list; allows
+    // for fast storage of random-access single entries
     template<typename It, typename Mt = It> struct json_encode_map_keys {
         void operator()(std::ostream& os, json_adapter_v2::opts *opts, It first, It last) {
             fmt::print(os, "[");
@@ -546,6 +556,25 @@ namespace json_adapter_v2 {
             opts->next_key_comma = true;
         }
     };
+}
+
+namespace kis_regex {
+
+template<> struct regex_match<json_adapter_v2::jsonable> {
+    bool operator()(const regex& re, json_adapter_v2::jsonable& v,
+            const json_adapter_v2::field_group_map& fg) {
+        return v.match_regex(re, fg);
+    }
+};
+
+template<> struct string_match<json_adapter_v2::jsonable> {
+    bool operator()(const std::string& match, json_adapter_v2::jsonable& v,
+            bool match_icase, bool match_full,
+            const json_adapter_v2::field_group_map& fg) {
+        return v.match_string(match, match_icase, match_full, fg);
+    }
+};
+
 }
 
 #endif /* __JSON_ADAPTER_V2__ */

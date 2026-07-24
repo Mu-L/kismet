@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 
 #include "devicetracker_component_v2.h"
+#include "regex_adapter.h"
 #include "util.h"
 
 #include "fmt/format.h"
@@ -526,6 +527,106 @@ void kis_tracked_device_base_v2::reset() {
     related_devices_ = {};
 }
 
+bool kis_tracked_device_base_v2::match_regex(const kis_regex::regex& re, const json_adapter_v2::field_group_map& fields) {
+    ssize_t hash;
+
+    auto lg = kis_shared_lock(mutex_, __func__);
+
+    json_adapter_v2::field_group_map subgroup;
+
+    for (const auto& f : fields) {
+        switch ((hash = json_adapter_v2::consthash(f.first))) {
+            case json_adapter_v2::consthash("kismet.device.base.macaddr"):
+                return kis_regex::regex_match<struct mac_addr>{}(re, mac_addr_);
+            case json_adapter_v2::consthash("kismet.device.base.phyname"):
+                return kis_regex::regex_match<std::string_view>{}(re, phyname_);
+            case json_adapter_v2::consthash("kismet.device.base.name"):
+                return kis_regex::regex_match<std::string>{}(re, devicename_);
+            case json_adapter_v2::consthash("kismet.device.base.username"):
+                return kis_regex::regex_match<std::string>{}(re, username_);
+            case json_adapter_v2::consthash("kismet.device.base.commonname"):
+                return kis_regex::regex_match<std::string>{}(re, commonname_);
+            case json_adapter_v2::consthash("kismet.device.base.type"):
+                return kis_regex::regex_match<std::string_view>{}(re, type_string_);
+            case json_adapter_v2::consthash("kismet.device.base.crypt"):
+                return kis_regex::regex_match<std::string>{}(re, crypt_string_);
+            case json_adapter_v2::consthash("kismet.device.base.manuf"):
+                return kis_regex::regex_match<std::string_view>{}(re, manuf_);
+            case json_adapter_v2::consthash("kismet.device.base.tags"):
+                for (const auto& i : tag_map_) {
+                    if (kis_regex::regex_match<std::string>{}(re, i.first)) {
+                        return true;
+                    }
+                    if (kis_regex::regex_match<std::string>{}(re, i.second)) {
+                        return true;
+                    }
+                }
+                break;
+            case json_adapter_v2::consthash("kismet.device.base.seenby"):
+                json_adapter_v2::group_fields(f.second.subfields, subgroup);
+                for (auto i : seenby_map_) {
+                    if (i.second.match_regex(re, subgroup)) {
+                        return true;
+                    }
+                }
+                break;
+        }
+    }
+
+    return false;
+}
+
+bool kis_tracked_device_base_v2::match_string(const std::string& match, bool match_icase, bool match_full,
+        const json_adapter_v2::field_group_map& fields) {
+    ssize_t hash;
+
+    auto lg = kis_shared_lock(mutex_, __func__);
+
+    json_adapter_v2::field_group_map subgroup;
+
+    for (const auto& f : fields) {
+        switch ((hash = json_adapter_v2::consthash(f.first))) {
+            case json_adapter_v2::consthash("kismet.device.base.macaddr"):
+                return kis_regex::string_match<struct mac_addr>{}(match, mac_addr_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.phyname"):
+                return kis_regex::string_match<std::string_view>{}(match, phyname_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.name"):
+                return kis_regex::string_match<std::string>{}(match, devicename_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.username"):
+                return kis_regex::string_match<std::string>{}(match, username_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.commonname"):
+                return kis_regex::string_match<std::string>{}(match, commonname_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.type"):
+                return kis_regex::string_match<std::string_view>{}(match, type_string_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.crypt"):
+                return kis_regex::string_match<std::string>{}(match, crypt_string_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.manuf"):
+                return kis_regex::string_match<std::string_view>{}(match, manuf_, match_icase, match_full);
+            case json_adapter_v2::consthash("kismet.device.base.tags"):
+                for (const auto& i : tag_map_) {
+                    if (kis_regex::string_match<std::string>{}(match, i.first, match_icase, match_full)) {
+                        return true;
+                    }
+                    if (kis_regex::string_match<std::string>{}(match, i.second, match_icase, match_full)) {
+                        return true;
+                    }
+                }
+                break;
+            case json_adapter_v2::consthash("kismet.device.base.seenby"):
+                json_adapter_v2::group_fields(f.second.subfields, subgroup);
+                for (auto i : seenby_map_) {
+                    if (i.second.match_string(match, match_icase, match_full, subgroup)) {
+                        return true;
+                    }
+                }
+                break;
+        }
+    }
+
+    return false;
+}
+
+
 void kis_tracked_device_base_v2::as_json(std::ostream& os, json_adapter_v2::opts *opts) {
     auto lg = kis_shared_lock(mutex_, __func__);
 
@@ -730,8 +831,9 @@ void kis_tracked_device_base_v2::filtered_as_json(std::ostream& os, json_adapter
                 json_adapter_v2::json_encode_keyed<kis_historic_location_v2>{}(os, f.second.rename, opts, location_history());
                 break;
             case json_adapter_v2::consthash("kismet.device.base.seenby"):
+                json_adapter_v2::group_fields(f.second.subfields, subgroup);
                 json_adapter_v2::json_encode_keyed_map<seenby_map_iter_t_>{}(os, f.second.rename, opts,
-                        seenby_map().begin(), seenby_map().end());
+                        seenby_map().begin(), seenby_map().end(), subgroup);
                 break;
             case json_adapter_v2::consthash("kismet.device.base.related_devices"):
                 json_adapter_v2::json_encode_keyed_map_custom<related_devices_iter_t_,

@@ -39,6 +39,43 @@ std::string_view json_adapter_v2::peek_path(const std::string_view& v) {
     return v.substr(0, pos);
 }
 
+void json_adapter_v2::group_fields(const json_adapter_v2::single_field_list& fields, field_group_map& grouped) {
+    for (const auto& of : fields) {
+        // get the parent object field
+        std::string_view fn{of};
+        const auto fp = json_adapter_v2::pop_path(fn);
+
+        std::string_view rename_empty;
+        const auto lp = fp.find_last_of("/");
+        if (lp == std::string_view::npos) {
+            rename_empty = fp;
+        } else {
+            rename_empty = fp.substr(lp + 1, fp.length());
+        }
+
+        // aggregate multiple child fields into one object
+        const auto& ins = grouped.try_emplace(std::string(fp.data(), fp.length()),
+                json_adapter_v2::field_group{.field = fn});
+
+        if (ins.second) {
+            // if we have more path components, append this field as a subfield immediately
+            if (fp != fn) {
+                ins.first->second.subfields.push_back(std::make_pair(fn, of));
+            } else {
+                ins.first->second.rename = std::string(rename_empty.data(), rename_empty.length());
+            }
+        } else {
+            // promote a single-field entry to a nested entry
+            if (ins.first->second.subfields.size() == 0) {
+                ins.first->second.subfields.push_back(std::make_pair(ins.first->second.field, ins.first->second.rename));
+                ins.first->second.rename = "";
+            }
+
+            ins.first->second.subfields.push_back(std::make_pair(fn, of));
+        }
+    }
+}
+
 void json_adapter_v2::group_fields(const json_adapter_v2::raw_field_list& fields, field_group_map& grouped) {
     for (const auto& of : fields) {
         // get the parent object field
